@@ -6,8 +6,10 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"regexp"
 
 	"github.com/go-zoox/fetch"
+	"github.com/gocolly/colly"
 	// "github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/tree"
 )
 
@@ -97,15 +99,33 @@ func main() {
 
 		fmt.Println(start_title, start_url, goal_title, goal_url)
 
-		// Print the list of articles
-		// for _, article := range articles {
-		// 	fmt.Printf("Title: %s\nURL: %s\n\n", article.Title, article.URL)
-		// }
-		// items := []Film{
-		// 	{Title: "StartTitle1", Director: "GoalTitle1"},
-		// 	{Title: "StartTitle2", Director: "GoalTitle2"},
-		// 	{Title: "StartTitle3", Director: "GoalTitle3"},
-		// }
+		c := colly.NewCollector(
+			colly.URLFilters(
+				regexp.MustCompile(`^https://en.wikipedia.org/wiki/([^:]+)[^:]*$`),
+			),
+		)
+
+		wikipediaRegex := regexp.MustCompile(`^/wiki/([^:]+)[^:]*$`)
+		// On every a element which has href attribute call callback
+		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+			link := e.Attr("href")
+			if wikipediaRegex.MatchString(link) {
+				// Print link
+				fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+
+				// Visit link found on page
+				// Only those links are visited which are matched by  any of the URLFilter regexps
+				c.Visit(e.Request.AbsoluteURL(link))
+			}
+		})
+
+		// Before making a request print "Visiting ..."
+		c.OnRequest(func(r *colly.Request) {
+			fmt.Println("Visiting", r.URL.String())
+		})
+
+		// Start scraping on http://httpbin.org
+		c.Visit(start_url)
 	}
 
 	http.HandleFunc("/", home)
