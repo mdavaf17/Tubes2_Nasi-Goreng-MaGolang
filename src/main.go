@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -8,6 +9,8 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/dominikbraun/graph"
+	"github.com/dominikbraun/graph/draw"
 	"github.com/go-zoox/fetch"
 	"github.com/gocolly/colly"
 	// "github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/tree"
@@ -115,7 +118,7 @@ func main() {
 
 				// Visit link found on page
 				// Only those links are visited which are matched by  any of the URLFilter regexps
-				c.Visit(e.Request.AbsoluteURL(link))
+				// c.Visit(e.Request.AbsoluteURL(link))
 			}
 		})
 
@@ -124,8 +127,47 @@ func main() {
 			fmt.Println("Visiting", r.URL.String())
 		})
 
-		// Start scraping on http://httpbin.org
-		c.Visit(start_url)
+		// Start scraping on start_url
+		// c.Visit(start_url)
+
+		// GRAPH RESULT
+		g := graph.New(graph.IntHash, graph.Directed())
+
+		_ = g.AddVertex(1)
+		_ = g.AddVertex(2)
+		_ = g.AddVertex(3)
+
+		_ = g.AddEdge(1, 2)
+		_ = g.AddEdge(1, 3)
+
+		var buf bytes.Buffer
+		draw.DOT(g, &buf)
+
+		resDOT := buf.String()
+
+		// Remove line breaks and extra spaces
+		re := regexp.MustCompile(`\s+`)
+		resDOT = re.ReplaceAllString(resDOT, " ")
+
+		tmpl := template.Must(template.New("graphItems").Parse(`
+			<script type="text/javascript">
+			var dot = {{.ResDOT}}
+			var options = {
+			format: 'svg',
+			}
+
+			var image = Viz(dot, options);
+			document.getElementById('output').innerHTML = image;
+			</script>
+			`))
+
+		tmplData := struct {
+			ResDOT string
+		}{
+			ResDOT: resDOT,
+		}
+
+		tmpl.Execute(w, tmplData)
 	}
 
 	http.HandleFunc("/", home)

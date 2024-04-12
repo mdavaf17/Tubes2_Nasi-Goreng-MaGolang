@@ -2,7 +2,11 @@ module github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src
 
 go 1.22.2
 
-require github.com/go-zoox/fetch v1.8.1
+require (
+	github.com/dominikbraun/graph v0.23.0
+	github.com/go-zoox/fetch v1.8.1
+	github.com/gocolly/colly v1.2.0
+)
 
 require (
 	github.com/PuerkitoBio/goquery v1.9.1 // indirect
@@ -13,7 +17,6 @@ require (
 	github.com/go-zoox/core-utils v1.2.11 // indirect
 	github.com/go-zoox/headers v1.0.6 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
-	github.com/gocolly/colly v1.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
