@@ -12,13 +12,18 @@ import (
 	"github.com/dominikbraun/graph"
 	"github.com/dominikbraun/graph/draw"
 	"github.com/go-zoox/fetch"
-	"github.com/gocolly/colly"
-	// "github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/tree"
+	"github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/bfs"
+	"github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/ids"
 )
 
 type Article struct {
 	Title string
 	URL   string
+}
+
+type TemplateData struct {
+	ID       string
+	Articles []Article
 }
 
 func main() {
@@ -77,12 +82,6 @@ func main() {
 				{{end}}
 			`))
 
-			// Create a struct to hold both ID and Articles
-			type TemplateData struct {
-				ID       string
-				Articles []Article
-			}
-
 			// Populate TemplateData struct
 			tmplData := TemplateData{
 				ID:       ID, // Pass the ID to the template
@@ -102,33 +101,11 @@ func main() {
 
 		fmt.Println(start_title, start_url, goal_title, goal_url)
 
-		c := colly.NewCollector(
-			colly.URLFilters(
-				regexp.MustCompile(`^https://en.wikipedia.org/wiki/([^:]+)[^:]*$`),
-			),
-		)
-
-		wikipediaRegex := regexp.MustCompile(`^/wiki/([^:]+)[^:]*$`)
-		// On every a element which has href attribute call callback
-		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-			link := e.Attr("href")
-			if wikipediaRegex.MatchString(link) {
-				// Print link
-				fmt.Printf("Link found: %q -> %s\n", e.Text, link)
-
-				// Visit link found on page
-				// Only those links are visited which are matched by  any of the URLFilter regexps
-				// c.Visit(e.Request.AbsoluteURL(link))
-			}
-		})
-
-		// Before making a request print "Visiting ..."
-		c.OnRequest(func(r *colly.Request) {
-			fmt.Println("Visiting", r.URL.String())
-		})
-
-		// Start scraping on start_url
-		// c.Visit(start_url)
+		if r.PostFormValue("inputAlgorithm") == "IDS" {
+			ids.Main(start_url, goal_url)
+		} else {
+			bfs.Main(start_url, goal_url)
+		}
 
 		// GRAPH RESULT
 		g := graph.New(graph.IntHash, graph.Directed())
