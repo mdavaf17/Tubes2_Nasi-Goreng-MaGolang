@@ -101,24 +101,17 @@ func main() {
 
 		fmt.Println(start_title, start_url, goal_title, goal_url)
 
+		var graphResult *graph.Graph[string, string]
+
 		if r.PostFormValue("inputAlgorithm") == "IDS" {
-			ids.Main(start_url, goal_url)
+			graphResult = ids.Main(start_url, goal_url)
 		} else {
-			bfs.Main(start_url, goal_url)
+			graphResult = bfs.Main(start_url, goal_url)
 		}
 
 		// GRAPH RESULT
-		g := graph.New(graph.IntHash, graph.Directed())
-
-		_ = g.AddVertex(1)
-		_ = g.AddVertex(2)
-		_ = g.AddVertex(3)
-
-		_ = g.AddEdge(1, 2)
-		_ = g.AddEdge(1, 3)
-
 		var buf bytes.Buffer
-		draw.DOT(g, &buf)
+		draw.DOT(*graphResult, &buf)
 
 		resDOT := buf.String()
 

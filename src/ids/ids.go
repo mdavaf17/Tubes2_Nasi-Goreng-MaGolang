@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/dominikbraun/graph"
 	"github.com/gocolly/colly"
 )
 
-func Main(startURL, goalURL string) {
+func Main(startURL, goalURL string) *graph.Graph[string, string] {
 	fmt.Println("IDS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Goal URL:", goalURL)
@@ -40,4 +41,15 @@ func Main(startURL, goalURL string) {
 	// Start scraping on start_url
 	// c.Visit(start_url)
 	// c.Visit("https://linktr.ee/RPL2024")
+
+	g := graph.New(graph.StringHash, graph.Directed())
+
+	_ = g.AddVertex("Polandia")
+	_ = g.AddVertex("B")
+	_ = g.AddVertex("C")
+
+	_ = g.AddEdge("Polandia", "C")
+	_ = g.AddEdge("Polandia", "B")
+
+	return &g
 }
