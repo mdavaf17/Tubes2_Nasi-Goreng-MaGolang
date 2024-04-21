@@ -88,5 +88,13 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 		_ = g.AddVertex(visited[i])
 	}
 
+	for i := 0; i < len(visited); i++ {
+		for j := 0; j < len(visited); j++ {
+			if visited[i] != visited[j] {
+				_ = g.AddEdge(visited[i], visited[j])
+			}
+		}
+	}
+
 	return &g
 }
