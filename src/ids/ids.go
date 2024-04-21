@@ -8,10 +8,30 @@ import (
 	"github.com/gocolly/colly"
 )
 
-func Main(startURL, goalURL string) *graph.Graph[string, string] {
-	fmt.Println("IDS")
-	fmt.Println("Start URL:", startURL)
-	fmt.Println("Goal URL:", goalURL)
+func contains(arr []string, target string) bool {
+	for _, item := range arr {
+		if item == target {
+			return true
+		}
+	}
+	return false
+}
+
+func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]string) {
+	if maxDepth == currentDepth {
+		*visited = append(*visited, startURL)
+		if startURL == goalURL {
+			return
+		} else {
+			(*visited) = (*visited)[:len(*visited)-1]
+		}
+		return
+	}
+
+	if startURL == goalURL {
+		*visited = append(*visited, startURL)
+		return
+	}
 
 	c := colly.NewCollector(
 		colly.URLFilters(
@@ -19,37 +39,54 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 		),
 	)
 
+	err := c.Visit(startURL)
+
+	if err != nil {
+		fmt.Println("Can't visitiing: ", startURL)
+		fmt.Println("Error: ", err)
+	}
+
+	*visited = append(*visited, startURL)
+
+	var tempArrayURL []string
+
 	wikipediaRegex := regexp.MustCompile(`^/wiki/([^:]+)[^:]*$`)
-	// On every a element which has href attribute call callback
+
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		if wikipediaRegex.MatchString(link) {
-			// Print link
-			fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+			tempArrayURL = append(tempArrayURL, e.Request.AbsoluteURL(link))
 		}
-		// Visit link found on page
-		// Only those links are visited which are matched by  any of the URLFilter regexps
-		// c.Visit(e.Request.AbsoluteURL(link))
-
 	})
 
-	// Before making a request print "Visiting ..."
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
-	})
+	for i := 0; i < len(tempArrayURL); i++ {
+		if !contains(*visited, tempArrayURL[i]) {
+			IDS(tempArrayURL[i], goalURL, currentDepth, maxDepth-1, visited)
 
-	// Start scraping on start_url
-	// c.Visit(start_url)
-	// c.Visit("https://linktr.ee/RPL2024")
+			if (*visited)[len(*visited)-1] == goalURL {
+				break
+			} else if (*visited)[len(*visited)-1] != goalURL {
+				*visited = (*visited)[:len(*visited)-1]
+			}
+		}
+	}
+}
+
+func Main(startURL, goalURL string) *graph.Graph[string, string] {
+	visited := make([]string, 0)
+
+	maxDepth := 0
+
+	for len(visited) == 0 || visited[len(visited)-1] != goalURL {
+		IDS(startURL, goalURL, 0, maxDepth, &visited)
+		maxDepth += 1
+	}
 
 	g := graph.New(graph.StringHash, graph.Directed())
 
-	_ = g.AddVertex("Polandia")
-	_ = g.AddVertex("B")
-	_ = g.AddVertex("C")
-
-	_ = g.AddEdge("Polandia", "C")
-	_ = g.AddEdge("Polandia", "B")
+	for i := 0; i < len(visited); i++ {
+		_ = g.AddVertex(visited[i])
+	}
 
 	return &g
 }
