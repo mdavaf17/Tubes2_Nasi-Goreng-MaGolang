@@ -32,6 +32,7 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 	t := tree.Empty[string]()
 	var parent_id uint
 	var current_id uint = 1
+	var final_id uint
 
 	c := colly.NewCollector(
 		colly.URLFilters(
@@ -43,24 +44,37 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 	// On every a element which has href attribute call callback
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
-		if (wikipediaRegex.MatchString(link)) && !(slices.Contains(visited, link)) && !(slices.Contains(queue, link)) { // is a wikipedia link && not visited && not in queue
+		absolute_link := e.Request.AbsoluteURL(link)
+
+		if !found && (wikipediaRegex.MatchString(link)) && !(slices.Contains(visited, absolute_link)) && !(slices.Contains(queue, absolute_link)) { // is a wikipedia link && not visited && not in queue
 			// Print link
 			fmt.Printf("Link found: %q -> %s\n", e.Text, link)
 
 			// Append link to array of to-be visited links
-			absolute_link := e.Request.AbsoluteURL(link)
 			queue = append(queue, absolute_link)
 			queue_id = append(queue_id, current_id)
 
 			t.Add(current_id, parent_id, absolute_link)
 
+			// if absolute_link == goalURL {
+			// 	found = true
+			// 	fmt.Printf("Link Found! " + absolute_link)
+			// 	final_id = current_id
+			// }
+
 			current_id++
 		}
 	})
 
-	// Before making a request print "Visiting ..."
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
+	// Before checking HTML check if link is goal
+	c.OnResponse(func(r *colly.Response) {
+		fmt.Println("Visited", r.Request.URL.String())
+		link := r.Request.URL.String()
+		if link == goalURL {
+			found = true
+			fmt.Println("Link Found! " + link)
+			final_id = parent_id
+		}
 	})
 
 	// Find path to goal URL
@@ -85,29 +99,27 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 	for (!found) && (len(queue) > 0) {
 		current_link = queue[0]
 		parent_id = queue_id[0]
-		if current_link == goalURL {
-			found = true
-			fmt.Println("Link Found! " + current_link)
-
-		} else {
-			queue = queue[1:]
-			queue_id = queue_id[1:]
-			visited = append(visited, current_link)
-			c.Visit(current_link)
-		}
+		queue = queue[1:]
+		queue_id = queue_id[1:]
+		visited = append(visited, current_link)
+		c.Visit(current_link)
 	}
 
 	// Get path to goal URL
-	path := findPath(parent_id)
+	path := []string{}
+	if found {
+		path = findPath(final_id)
+		fmt.Println(path)
+	}
 
 	// Initiate graph
 	g := graph.New(graph.StringHash, graph.Directed())
 
 	// Add path to graph
-	for i := len(path) - 1; i > 0; i-- {
+	_ = g.AddVertex(path[len(path)-1])
+	for i := len(path) - 2; i > -1; i-- {
 		_ = g.AddVertex(path[i])
-		_ = g.AddVertex(path[i-1])
-		_ = g.AddEdge(path[i], path[i-1])
+		_ = g.AddEdge(path[i+1], path[i])
 	}
 
 	return &g
