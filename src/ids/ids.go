@@ -17,37 +17,27 @@ func contains(arr []string, target string) bool {
 	return false
 }
 
-func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]string) {
+func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]string, cek *int) {
+
 	if maxDepth == currentDepth {
 		*visited = append(*visited, startURL)
-		if startURL == goalURL {
-			return
-		} else {
-			(*visited) = (*visited)[:len(*visited)-1]
-		}
+
 		return
 	}
 
 	if startURL == goalURL {
 		*visited = append(*visited, startURL)
+		*cek = 1
 		return
 	}
+
 
 	c := colly.NewCollector(
 		colly.URLFilters(
 			regexp.MustCompile(`^https://en.wikipedia.org/wiki/([^:]+)[^:]*$`),
 		),
 	)
-
-	err := c.Visit(startURL)
-
-	if err != nil {
-		fmt.Println("Can't visitiing: ", startURL)
-		fmt.Println("Error: ", err)
-	}
-
-	*visited = append(*visited, startURL)
-
+	
 	var tempArrayURL []string
 
 	wikipediaRegex := regexp.MustCompile(`^/wiki/([^:]+)[^:]*$`)
@@ -59,33 +49,67 @@ func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]st
 		}
 	})
 
-	for i := 0; i < len(tempArrayURL); i++ {
-		if !contains(*visited, tempArrayURL[i]) {
-			IDS(tempArrayURL[i], goalURL, currentDepth, maxDepth-1, visited)
+	err := c.Visit(startURL)
+
+	if err != nil {
+		fmt.Println("Can't visitiing: ", startURL)
+		fmt.Println("Error: ", err)
+	}
+
+	
+	*visited = append(*visited, startURL)
+
+
+	for _, element := range tempArrayURL {
+
+		if !contains(*visited, element) {
+
+			IDS(element, goalURL, currentDepth, maxDepth-1, visited, cek)
 
 			if (*visited)[len(*visited)-1] == goalURL {
+				*cek = 1
 				break
-			} else if (*visited)[len(*visited)-1] != goalURL {
-				*visited = (*visited)[:len(*visited)-1]
+				} else if (*visited)[len(*visited)-1] != goalURL {
+					*visited = (*visited)[:len(*visited)-1]
 			}
 		}
 	}
+
 }
+
 
 func Main(startURL, goalURL string) *graph.Graph[string, string] {
 	visited := make([]string, 0)
 
-	maxDepth := 0
+	var maxDepth int = 0
 
-	for len(visited) == 0 || visited[len(visited)-1] != goalURL {
-		IDS(startURL, goalURL, 0, maxDepth, &visited)
+	var cek int = 0
+
+	for cek == 0{
+
+		visited := make([]string, 0)
+
+		IDS(startURL, goalURL, 0, maxDepth, &visited, &cek)
+
 		maxDepth += 1
-		if(visited[len(visited)-1] == goalURL){
+
+
+		if cek == 1{
+
 			break
 		}
 	}
 
 	g := graph.New(graph.StringHash, graph.Directed())
+
+	// fmt.Println("*")
+	// fmt.Println("**")
+	// for i := 0; i < len(visited);i++{
+	// 	fmt.Println((visited)[i])
+	// }
+	// fmt.Println("**")
+	// fmt.Println("*")
+
 
 	for i := 0; i < len(visited); i++ {
 		_ = g.AddVertex(visited[i])
