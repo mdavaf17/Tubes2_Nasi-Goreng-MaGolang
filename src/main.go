@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/dominikbraun/graph"
 	"github.com/dominikbraun/graph/draw"
@@ -103,11 +104,14 @@ func main() {
 
 		var graphResult *graph.Graph[string, string]
 
+		t1 := time.Now()
 		if r.PostFormValue("inputAlgorithm") == "IDS" {
 			graphResult = ids.Main(start_url, goal_url)
 		} else {
 			graphResult = bfs.Main(start_url, goal_url)
 		}
+		t2 := time.Now()
+		fmt.Println(t2.Sub(t1).Seconds())
 
 		// GRAPH RESULT
 		var buf bytes.Buffer
