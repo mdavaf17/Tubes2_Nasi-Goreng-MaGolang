@@ -19,6 +19,16 @@ func contains(arr []string, target string) bool {
 
 func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]string, cek *int) {
 
+	if maxDepth == 0{
+		if len(*visited) == 0{
+			if goalURL == startURL{
+				*visited = append(*visited, startURL)
+				return
+			}
+		}
+	}
+	
+
 	if maxDepth == currentDepth {
 		*visited = append(*visited, startURL)
 
@@ -64,7 +74,7 @@ func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]st
 
 		if !contains(*visited, element) {
 
-			IDS(element, goalURL, currentDepth, maxDepth-1, visited, cek)
+			IDS(element, goalURL, currentDepth + 1, maxDepth, visited, cek)
 
 			if (*visited)[len(*visited)-1] == goalURL {
 				*cek = 1
@@ -79,7 +89,7 @@ func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]st
 
 
 func Main(startURL, goalURL string) *graph.Graph[string, string] {
-	visited := make([]string, 0)
+	visited := []string{}
 
 	var maxDepth int = 0
 
@@ -87,7 +97,7 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 
 	for cek == 0{
 
-		visited := make([]string, 0)
+		visited = []string{}
 
 		IDS(startURL, goalURL, 0, maxDepth, &visited, &cek)
 
@@ -102,13 +112,13 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 
 	g := graph.New(graph.StringHash, graph.Directed())
 
-	// fmt.Println("*")
-	// fmt.Println("**")
-	// for i := 0; i < len(visited);i++{
-	// 	fmt.Println((visited)[i])
-	// }
-	// fmt.Println("**")
-	// fmt.Println("*")
+	fmt.Println("*")
+	fmt.Println("**")
+	for i := 0; i < len(visited);i++{
+		fmt.Println((visited)[i])
+	}
+	fmt.Println("**")
+	fmt.Println("*")
 
 
 	for i := 0; i < len(visited); i++ {
