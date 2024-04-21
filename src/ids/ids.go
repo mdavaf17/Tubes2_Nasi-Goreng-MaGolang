@@ -80,6 +80,9 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 	for len(visited) == 0 || visited[len(visited)-1] != goalURL {
 		IDS(startURL, goalURL, 0, maxDepth, &visited)
 		maxDepth += 1
+		if(visited[len(visited)-1] == goalURL){
+			break
+		}
 	}
 
 	g := graph.New(graph.StringHash, graph.Directed())
