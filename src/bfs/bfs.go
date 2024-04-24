@@ -2,6 +2,7 @@ package bfs
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"slices"
 
@@ -15,12 +16,9 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Goal URL:", goalURL)
 
-	// Initiate array to store visited links
-	visited := []string{}
-
-	// Initiate queue to store to-be visited links
-	queue := []string{}
-	queue_id := []uint{}
+	// Initiate array to store visited links, also acts as queue
+	list := []string{}
+	var visit_id uint = 0 // tracks id of currently visited link
 
 	// Var to store current link
 	var current_link string
@@ -31,7 +29,7 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 	// Initiate tree and id for tree
 	t := tree.Empty[string]()
 	var parent_id uint
-	var current_id uint = 1
+	var current_id uint = 1 // tracks id for tree
 	var final_id uint
 
 	c := colly.NewCollector(
@@ -40,19 +38,24 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 		),
 	)
 
+	file, err := os.Create("log.txt")
+	if err != nil {
+		fmt.Println("Failed to create log")
+	}
+
 	wikipediaRegex := regexp.MustCompile(`^/wiki/([^:]+)[^:]*$`)
 	// On every a element which has href attribute call callback
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		absolute_link := e.Request.AbsoluteURL(link)
 
-		if !found && (wikipediaRegex.MatchString(link)) && !(slices.Contains(visited, absolute_link)) && !(slices.Contains(queue, absolute_link)) { // is a wikipedia link && not visited && not in queue
+		if !found && (wikipediaRegex.MatchString(link)) && !(slices.Contains(list, absolute_link)) { // is a wikipedia link && not visited && not in queue
 			// Print link
 			fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+			_, err = file.WriteString("Link found: " + e.Text + " -> " + link + "\n")
 
 			// Append link to array of to-be visited links
-			queue = append(queue, absolute_link)
-			queue_id = append(queue_id, current_id)
+			list = append(list, absolute_link)
 
 			t.Add(current_id, parent_id, absolute_link)
 
@@ -69,11 +72,14 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 	// Before checking HTML check if link is goal
 	c.OnResponse(func(r *colly.Response) {
 		fmt.Println("Visited", r.Request.URL.String())
+		_, err = file.WriteString("Visited " + r.Request.URL.String() + "\n")
 		link := r.Request.URL.String()
 		if link == goalURL {
 			found = true
-			fmt.Println("Link Found! " + link)
 			final_id = parent_id
+
+			fmt.Println("Goal Found! " + link)
+			_, err = file.WriteString("Goal Found! " + link + "\n")
 		}
 	})
 
@@ -94,14 +100,11 @@ func Main(startURL, goalURL string) *graph.Graph[string, string] {
 
 	// Start scraping on start_url
 	t.Add(0, 0, startURL)
-	queue = append(queue, startURL)
-	queue_id = append(queue_id, 0)
-	for (!found) && (len(queue) > 0) {
-		current_link = queue[0]
-		parent_id = queue_id[0]
-		queue = queue[1:]
-		queue_id = queue_id[1:]
-		visited = append(visited, current_link)
+	list = append(list, startURL)
+	for (!found) && (int(visit_id) < len(list)) {
+		current_link = list[visit_id]
+		parent_id = visit_id
+		visit_id++
 		c.Visit(current_link)
 	}
 
