@@ -15,6 +15,7 @@ import (
 	"github.com/go-zoox/fetch"
 	"github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/bfs"
 	"github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/ids"
+	"github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/util"
 )
 
 type Article struct {
@@ -99,19 +100,23 @@ func main() {
 		start_url := r.PostFormValue("inputStartURL")
 		goal_title := r.PostFormValue("inputGoalTitle")
 		goal_url := r.PostFormValue("inputGoalURL")
+		goal_pageid, _ := util.URLToPageID(goal_url)
+		Algorithm := r.PostFormValue("inputAlgorithm")
 
 		fmt.Println(start_title, start_url, goal_title, goal_url)
+		fmt.Printf("https://en.wikipedia.org/?curid=%s\n", goal_pageid)
 
 		var graphResult *graph.Graph[string, string]
 
 		t1 := time.Now()
-		if r.PostFormValue("inputAlgorithm") == "IDS" {
+		if Algorithm == "IDS" {
 			graphResult = ids.Main(start_url, goal_url)
 		} else {
 			graphResult = bfs.Main(start_url, goal_url)
 		}
 		t2 := time.Now()
-		fmt.Println(t2.Sub(t1).Seconds())
+		// fmt.Println(t2.Sub(t1).Seconds())
+		timer := t2.Sub(t1).Seconds()
 
 		// GRAPH RESULT
 		var buf bytes.Buffer
@@ -124,21 +129,59 @@ func main() {
 		resDOT = re.ReplaceAllString(resDOT, " ")
 
 		tmpl := template.Must(template.New("graphItems").Parse(`
-			<script type="text/javascript">
-			var dot = {{.ResDOT}}
+		<script type="text/javascript">
+			var algo = {{.Algo}};
+			var dot = {{.ResDOT}};
 			var options = {
-			format: 'svg',
-			}
-
+				format: 'svg',
+			};
+		
 			var image = Viz(dot, options);
-			document.getElementById('output').innerHTML = image;
-			</script>
+			var outputElement = document.getElementById('output');
+		
+			var algorithmElement = document.createElement('h5');
+			algorithmElement.textContent = algo + ' Output'; // Use textContent instead of innerHTML
+		
+			var listElement = document.createElement('ul');
+			listElement.className = "list-group";
+		
+			// Create list items and set their inner HTML with the computed values
+			var listItem0 = document.createElement('li');
+			listItem0.innerHTML = image;
+		
+			var listItem1 = document.createElement('li');
+			listItem1.innerHTML = 'Jumlah artikel yang diperiksa: 50';
+		
+			var listItem2 = document.createElement('li');
+			listItem2.innerHTML = 'Jumlah artikel yang dilalui: 100';
+		
+			var listItem3 = document.createElement('li');
+			listItem3.innerHTML = 'Waktu: ' + parseFloat({{.Timer}}).toFixed(5) + ' seconds';
+		
+			// Append the list items to the unordered list
+			listItem0.className = "list-group-item justify-content-center d-flex";
+			listItem1.className = "list-group-item";
+			listItem2.className = "list-group-item";
+			listItem3.className = "list-group-item";
+			listElement.appendChild(listItem0);
+			listElement.appendChild(listItem1);
+			listElement.appendChild(listItem2);
+			listElement.appendChild(listItem3);
+		
+			// Append elements to outputElement
+			outputElement.appendChild(algorithmElement);
+			outputElement.appendChild(listElement);
+		</script>	
 			`))
 
 		tmplData := struct {
 			ResDOT string
+			Algo   string
+			Timer  float64
 		}{
 			ResDOT: resDOT,
+			Algo:   Algorithm,
+			Timer:  timer,
 		}
 
 		tmpl.Execute(w, tmplData)
