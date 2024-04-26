@@ -15,7 +15,6 @@ import (
 	"github.com/go-zoox/fetch"
 	"github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/bfs"
 	"github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/ids"
-	"github.com/mdavaf17/Tubes2_Nasi-Goreng-MaGolang/src/util"
 )
 
 type Article struct {
@@ -100,23 +99,22 @@ func main() {
 		start_url := r.PostFormValue("inputStartURL")
 		goal_title := r.PostFormValue("inputGoalTitle")
 		goal_url := r.PostFormValue("inputGoalURL")
-		goal_pageid, _ := util.URLToPageID(goal_url)
-		Algorithm := r.PostFormValue("inputAlgorithm")
+		algorithm := r.PostFormValue("inputAlgorithm")
 
 		fmt.Println(start_title, start_url, goal_title, goal_url)
-		fmt.Printf("https://en.wikipedia.org/?curid=%s\n", goal_pageid)
 
 		var graphResult *graph.Graph[string, string]
+		var numChecked int
 
 		t1 := time.Now()
-		if Algorithm == "IDS" {
-			graphResult = ids.Main(start_url, goal_url)
+		if algorithm == "IDS" {
+			graphResult, numChecked = ids.Main(start_url, goal_url)
 		} else {
-			graphResult = bfs.Main(start_url, goal_url)
+			graphResult, numChecked = bfs.Main(start_url, goal_url)
 		}
 		t2 := time.Now()
-		// fmt.Println(t2.Sub(t1).Seconds())
 		timer := t2.Sub(t1).Seconds()
+		lenRes, _ := (*graphResult).Order()
 
 		// GRAPH RESULT
 		var buf bytes.Buffer
@@ -130,8 +128,10 @@ func main() {
 
 		tmpl := template.Must(template.New("graphItems").Parse(`
 		<script type="text/javascript">
-			var algo = {{.Algo}};
 			var dot = {{.ResDOT}};
+			var algo = {{.Algo}};
+			var checked = {{.LenChecked}};
+			var vertices = {{.LenRes}};
 			var options = {
 				format: 'svg',
 			};
@@ -150,13 +150,13 @@ func main() {
 			listItem0.innerHTML = image;
 		
 			var listItem1 = document.createElement('li');
-			listItem1.innerHTML = 'Jumlah artikel yang diperiksa: 50';
+			listItem1.innerHTML = 'Number of checked article: ' + checked;
 		
 			var listItem2 = document.createElement('li');
-			listItem2.innerHTML = 'Jumlah artikel yang dilalui: 100';
+			listItem2.innerHTML = 'Number of article in solution: ' + vertices;
 		
 			var listItem3 = document.createElement('li');
-			listItem3.innerHTML = 'Waktu: ' + parseFloat({{.Timer}}).toFixed(5) + ' seconds';
+			listItem3.innerHTML = 'Time: ' + parseFloat({{.Timer}}).toFixed(5) + ' seconds';
 		
 			// Append the list items to the unordered list
 			listItem0.className = "list-group-item justify-content-center d-flex";
@@ -175,13 +175,17 @@ func main() {
 			`))
 
 		tmplData := struct {
-			ResDOT string
-			Algo   string
-			Timer  float64
+			ResDOT     string
+			Algo       string
+			LenChecked int
+			LenRes     int
+			Timer      float64
 		}{
-			ResDOT: resDOT,
-			Algo:   Algorithm,
-			Timer:  timer,
+			ResDOT:     resDOT,
+			Algo:       algorithm,
+			LenChecked: numChecked,
+			LenRes:     lenRes,
+			Timer:      timer,
 		}
 
 		tmpl.Execute(w, tmplData)
@@ -192,5 +196,5 @@ func main() {
 	http.HandleFunc("/race/", race)
 
 	// Exit when error
-	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+	log.Fatal(http.ListenAndServe(":8030", nil))
 }

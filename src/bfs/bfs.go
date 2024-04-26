@@ -2,7 +2,6 @@ package bfs
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -13,16 +12,16 @@ import (
 )
 
 func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
-	file, err := os.Create("log.txt")
-	if err != nil {
-		fmt.Println("Failed to create log")
-	}
+	// file, err := os.Create("log.txt")
+	// if err != nil {
+	// 	fmt.Println("Failed to create log")
+	// }
 
 	fmt.Println("BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Goal URL:", goalURL)
-	_, err = file.WriteString("Start URL: " + startURL)
-	_, err = file.WriteString("Goal URL: " + goalURL)
+	// _, err = file.WriteString("Start URL: " + startURL)
+	// _, err = file.WriteString("Goal URL: " + goalURL)
 
 	// Initiate array to store visited links, also acts as queue
 	list := []string{}
@@ -59,8 +58,8 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 		if !found && (wikipediaRegex.MatchString(link)) && !(slices.Contains(list, absolute_link)) && !(slices.Contains(black_list, absolute_link)) { // is a wikipedia link && not visited && not in queue
 
 			// Print link
-			fmt.Printf("Link found: %q -> %s : %s\n", e.Text, link)
-			_, err = file.WriteString("Link found: " + e.Text + " -> " + link + "\n")
+			// fmt.Printf("Link found: %q -> %s : %s\n", e.Text, link)
+			// _, err = file.WriteString("Link found: " + e.Text + " -> " + link + "\n")
 
 			// Append link to array of to-be visited links
 			list = append(list, absolute_link)
@@ -70,7 +69,7 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 			if absolute_link == goalURL {
 				found = true
 				fmt.Println("Goal Found! " + link)
-				_, err = file.WriteString("Goal Found! " + link + "\n")
+				// _, err = file.WriteString("Goal Found! " + link + "\n")
 				final_id = current_id
 			}
 
@@ -84,14 +83,14 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 		articleID := "123"
 
 		fmt.Println("Visited " + r.Request.URL.String() + " : " + articleID)
-		_, err = file.WriteString("Visited " + r.Request.URL.String() + " : " + articleID + "\n")
+		// _, err = file.WriteString("Visited " + r.Request.URL.String() + " : " + articleID + "\n")
 
 		if link == goalURL {
 			found = true
 			final_id = parent_id
 
 			fmt.Println("Goal Found! " + link)
-			_, err = file.WriteString("Goal Found! " + link + "\n")
+			// _, err = file.WriteString("Goal Found! " + link + "\n")
 		}
 
 		num_visited++

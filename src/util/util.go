@@ -56,3 +56,4 @@ func URLToPageID(url string) (string, error) {
 	// Return the values after scraping is complete
 	return wgArticleID, err
 }
+
