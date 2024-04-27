@@ -29,15 +29,15 @@ Tugas Besar 2 IF2211 Strategi Algoritma Semester II tahun 2023/2024 Pemanfaatan 
 ```
 cd src
 ```
-5. Build the docker image
+2. Build the docker image
 ```
 docker build -t tubes2_nasi_goreng_magolang .
 ```
-6. Run the docker image as a conainer
+3. Run the docker image as a conainer
 ```
 docker run -p 8030:8030 tubes2_nasi_goreng_magolang
 ```
-7. Open your web browser on [http://localhost:8030](http://localhost:8030) or [http://127.0.0.1/:8030](http://127.0.0.1/:8030)
+4. Open your web browser on [http://localhost:8030](http://localhost:8030) or [http://127.0.0.1/:8030](http://127.0.0.1/:8030)
 ## Author 
 
 ### Group 30 | Nasi Goreng MaGolang
