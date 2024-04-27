@@ -5,8 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	// "sync"
-
 	"github.com/dominikbraun/graph"
 	"github.com/gocolly/colly"
 )
@@ -79,7 +77,7 @@ func getWikipediaTitleFromURL(url string) string {
 	return title
 }
 
-func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]string, cek *int, periksa *map[string]bool) {
+func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]string, cek *int, periksa *map[string]bool, visited_heuristic *[]string) {
 
 	if maxDepth == 0 {
 		if len(*visited) == 0 {
@@ -146,13 +144,15 @@ func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]st
 
 	*visited = append(*visited, startURL)
 
+	*visited_heuristic = append(*visited_heuristic, startURL)
+
 	for _, element := range tempArrayURL {
 		// fmt.Println(element)
 		// fmt.Println(goalURL)
 
-		if !contains(*visited, element) {
+		if !contains(*visited_heuristic, element) {
 
-			IDS(element, goalURL, currentDepth+1, maxDepth, visited, cek, periksa)
+			IDS(element, goalURL, currentDepth+1, maxDepth, visited, cek, periksa, visited_heuristic)
 
 			if (*visited)[len(*visited)-1] == goalURL {
 				*cek = 1
@@ -176,12 +176,15 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 
 	// fmt.Println(startURL)
 	// fmt.Println(goalURL)
+	visited_heuristic := []string{}
 
 	for cek == 0 {
 
 		visited = []string{}
 
-		IDS(startURL, goalURL, 0, maxDepth, &visited, &cek, &periksa)
+		visited_heuristic = []string{}
+
+		IDS(startURL, goalURL, 0, maxDepth, &visited, &cek, &periksa, &visited_heuristic)
 
 		maxDepth += 1
 
