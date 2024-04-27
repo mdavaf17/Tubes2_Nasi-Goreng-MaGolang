@@ -62,6 +62,23 @@ func contains(arr []string, target string) bool {
 	return false
 }
 
+func getWikipediaTitleFromURL(url string) string {
+	var title string
+
+	// Instantiate a new collector
+	co := colly.NewCollector()
+
+	// Find the title element
+	co.OnHTML("title", func(e *colly.HTMLElement) {
+		title = strings.Split(e.Text, " - Wikipedia")[0]
+	})
+
+	// Visit the URL
+	co.Visit(url)
+
+	return title
+}
+
 func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]string, cek *int, periksa *map[string]bool) {
 
 	if maxDepth == 0 {
@@ -184,14 +201,13 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 	fmt.Println("**")
 	fmt.Println("*")
 
-	for i := 0; i < len(visited); i++ {
-		_ = g.AddVertex(visited[i])
+	for _, v := range visited {
+		_ = g.AddVertex(getWikipediaTitleFromURL(v))
 	}
 
-	for i := 0; i < len(visited); i++ {
-		if i+1 < len(visited) {
-			_ = g.AddEdge(visited[i], visited[i+1])
-		}
+	// Add edges to the graph
+	for i := 0; i+1 < len(visited); i++ {
+		_ = g.AddEdge(getWikipediaTitleFromURL(visited[i]), getWikipediaTitleFromURL(visited[i+1]))
 	}
 
 	return &g, len(periksa)

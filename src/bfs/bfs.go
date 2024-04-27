@@ -52,6 +52,23 @@ func doesNotContainAnyPrefix(s string) bool {
 	return true
 }
 
+func getWikipediaTitleFromURL(url string) string {
+	var title string
+
+	// Instantiate a new collector
+	co := colly.NewCollector()
+
+	// Find the title element
+	co.OnHTML("title", func(e *colly.HTMLElement) {
+		title = strings.Split(e.Text, " - Wikipedia")[0]
+	})
+
+	// Visit the URL
+	co.Visit(url)
+
+	return title
+}
+
 func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 	// file, err := os.Create("log.txt")
 	// if err != nil {
@@ -136,11 +153,11 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 
 		n, _ := t.Find(id)
 		for !(n.GetID() == 0) {
-			path = append(path, n.GetData())
+			path = append(path, getWikipediaTitleFromURL(n.GetData()))
 			n = n.GetParent()
 		}
 
-		path = append(path, n.GetData())
+		path = append(path, getWikipediaTitleFromURL(n.GetData()))
 
 		return path
 	}
