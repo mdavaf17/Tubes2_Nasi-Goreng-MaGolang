@@ -26,7 +26,7 @@ docker build -t tubes2_nasi_goreng_magolang .
 ```
 6. Run the docker image as a conainer
 ```
-docker build -t tubes2_nasi_goreng_magolang .
+docker run -p 8030:8030 tubes2_nasi_goreng_magolang
 ```
 7. Open your web browser on [http://localhost:8030](http://localhost:8030) or [http://127.0.0.1/:8030](http://127.0.0.1/:8030)
 ## Author 
