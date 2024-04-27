@@ -153,11 +153,11 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 
 		n, _ := t.Find(id)
 		for !(n.GetID() == 0) {
-			path = append(path, getWikipediaTitleFromURL(n.GetData()))
+			path = append(path, n.GetData())
 			n = n.GetParent()
 		}
 
-		path = append(path, getWikipediaTitleFromURL(n.GetData()))
+		path = append(path, n.GetData())
 
 		return path
 	}
@@ -186,10 +186,10 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 	g := graph.New(graph.StringHash, graph.Directed())
 
 	// Add path to graph
-	_ = g.AddVertex(path[len(path)-1])
+	_ = g.AddVertex(getWikipediaTitleFromURL(path[len(path)-1]))
 	for i := len(path) - 2; i > -1; i-- {
-		_ = g.AddVertex(path[i])
-		_ = g.AddEdge(path[i+1], path[i])
+		_ = g.AddVertex(getWikipediaTitleFromURL(path[i]), graph.VertexAttribute("URL", path[i]))
+		_ = g.AddEdge(getWikipediaTitleFromURL(path[i+1]), getWikipediaTitleFromURL(path[i]))
 	}
 
 	// Output jumlah artikel yang diperiksa dan dilalui

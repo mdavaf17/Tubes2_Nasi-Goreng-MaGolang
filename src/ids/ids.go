@@ -205,7 +205,7 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 	fmt.Println("*")
 
 	for _, v := range visited {
-		_ = g.AddVertex(getWikipediaTitleFromURL(v))
+		_ = g.AddVertex(getWikipediaTitleFromURL(v), graph.VertexAttribute("URL", v))
 	}
 
 	// Add edges to the graph
