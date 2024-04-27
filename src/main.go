@@ -46,7 +46,7 @@ func main() {
 		}
 
 		if search_title != "" {
-			url := fmt.Sprintf("https://en.wikipedia.org/w/api.php?action=opensearch&search=%s&limit=10&namespace=0&format=json", search_title)
+			url := fmt.Sprintf("https://en.wikipedia.org/w/api.php?action=opensearch&search=%s&limit=10&namespace=0&format=json&redirects=resolve", search_title)
 			response, _ := fetch.Get(url)
 			jsonData, _ := response.JSON()
 
