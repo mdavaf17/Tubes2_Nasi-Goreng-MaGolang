@@ -94,13 +94,11 @@ func main() {
 	}
 
 	race := func(w http.ResponseWriter, r *http.Request) {
-		start_title := r.PostFormValue("inputStartTitle")
+		// start_title := r.PostFormValue("inputStartTitle")
 		start_url := r.PostFormValue("inputStartURL")
-		goal_title := r.PostFormValue("inputGoalTitle")
+		// goal_title := r.PostFormValue("inputGoalTitle")
 		goal_url := r.PostFormValue("inputGoalURL")
 		algorithm := r.PostFormValue("inputAlgorithm")
-
-		fmt.Println(start_title, start_url, goal_title, goal_url)
 
 		var graphResult *graph.Graph[string, string]
 		var numChecked int
@@ -169,6 +167,7 @@ func main() {
 			// Append elements to outputElement
 			outputElement.appendChild(algorithmElement);
 			outputElement.appendChild(listElement);
+			stopTimer();
 		</script>	
 			`))
 
