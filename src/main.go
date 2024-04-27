@@ -110,9 +110,7 @@ func main() {
 			graphResult, numChecked = bfs.Main(start_url, goal_url)
 		}
 		t2 := time.Now()
-		duration := t2.Sub(t1)
-		minutes := int(duration.Minutes())
-		seconds := duration.Seconds() - float64(minutes)*60
+		duration := int(t2.Sub(t1).Milliseconds())
 		lenRes, _ := (*graphResult).Order()
 		lenRes -= 1
 
@@ -128,6 +126,7 @@ func main() {
 			var algo = {{.Algo}};
 			var checked = {{.LenChecked}};
 			var vertices = {{.LenRes}};
+			var duration = {{.Duration}};
 			var options = {
 				format: 'svg',
 			};
@@ -152,7 +151,7 @@ func main() {
 			listItem2.innerHTML = 'Number of article in solution: ' + vertices;
 		
 			var listItem3 = document.createElement('li');
-			listItem3.innerHTML = 'Time: {{.Minute}} minutes ' + parseFloat({{.Second}}).toFixed(5) + ' seconds';
+			listItem3.innerHTML = 'Time: ' + duration + ' ms';
 		
 			// Append the list items to the unordered list
 			listItem0.className = "list-group-item justify-content-center d-flex";
@@ -176,15 +175,13 @@ func main() {
 			Algo       string
 			LenChecked int
 			LenRes     int
-			Minute     int
-			Second     float64
+			Duration   int
 		}{
 			ResDOT:     resDOT,
 			Algo:       algorithm,
 			LenChecked: numChecked,
 			LenRes:     lenRes,
-			Minute:     minutes,
-			Second:     seconds,
+			Duration:   duration,
 		}
 
 		tmpl.Execute(w, tmplData)
