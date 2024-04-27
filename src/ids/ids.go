@@ -3,12 +3,55 @@ package ids
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	// "sync"
 
 	"github.com/dominikbraun/graph"
 	"github.com/gocolly/colly"
 )
+
+func doesNotContainAnyPrefix(s string) bool {
+	prefixes := []string{
+		"https://en.wikipedia.org/wiki/Talk:",
+		"https://en.wikipedia.org/wiki/User:",
+		"https://en.wikipedia.org/wiki/User talk:",
+		"https://en.wikipedia.org/wiki/Wikipedia:",
+		"https://en.wikipedia.org/wiki/WP:",
+		"https://en.wikipedia.org/wiki/WT:",
+		"https://en.wikipedia.org/wiki/Wikipedia talk:",
+		"https://en.wikipedia.org/wiki/File:",
+		"https://en.wikipedia.org/wiki/File talk:",
+		"https://en.wikipedia.org/wiki/MediaWiki:",
+		"https://en.wikipedia.org/wiki/MediaWiki talk:",
+		"https://en.wikipedia.org/wiki/Template:",
+		"https://en.wikipedia.org/wiki/Template talk:",
+		"https://en.wikipedia.org/wiki/Help:",
+		"https://en.wikipedia.org/wiki/Help talk:",
+		"https://en.wikipedia.org/wiki/Category:",
+		"https://en.wikipedia.org/wiki/Category:talk",
+		"https://en.wikipedia.org/wiki/Portal:",
+		"https://en.wikipedia.org/wiki/Portal talk:",
+		"https://en.wikipedia.org/wiki/Draft:",
+		"https://en.wikipedia.org/wiki/Draft talk:",
+		"https://en.wikipedia.org/wiki/TimedText:",
+		"https://en.wikipedia.org/wiki/TimedText talk:",
+		"https://en.wikipedia.org/wiki/Module:",
+		"https://en.wikipedia.org/wiki/Module talk:",
+		"https://en.wikipedia.org/wiki/Image:",
+		"https://en.wikipedia.org/wiki/Image Talk:",
+		"https://en.wikipedia.org/wiki/Topic:",
+		"https://en.wikipedia.org/wiki/Special:",
+		"https://en.wikipedia.org/wiki/Media:",
+	}
+
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(s, prefix) {
+			return false
+		}
+	}
+	return true
+}
 
 func contains(arr []string, target string) bool {
 	for _, item := range arr {
@@ -24,7 +67,6 @@ func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]st
 	if maxDepth == 0 {
 		if len(*visited) == 0 {
 			if goalURL == startURL {
-				(*periksa)[startURL] = true
 				*visited = append(*visited, startURL)
 				return
 			}
@@ -43,22 +85,17 @@ func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]st
 		return
 	}
 
-	c := colly.NewCollector(
-		colly.URLFilters(
-			regexp.MustCompile(`^https://en.wikipedia.org/wiki/([^:]+)[^:]*$`),
-		),
-	)
+	c := colly.NewCollector()
 
 	var tempArrayURL []string
 
-	wikipediaRegex := regexp.MustCompile(`^/wiki/([^:]+)[^:]*$`)
+	wikipediaRegex := regexp.MustCompile(`^https://en.wikipedia.org/wiki/`)
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		if wikipediaRegex.MatchString(link) {
-
+		link, _, _ := strings.Cut(e.Attr("href"), "#")
+		absolute_link := e.Request.AbsoluteURL(link)
+		if (wikipediaRegex.MatchString(absolute_link)) && (absolute_link != "https://en.wikipedia.org/wiki/Main_Page") && doesNotContainAnyPrefix(absolute_link) {
 			tempArrayURL = append(tempArrayURL, e.Request.AbsoluteURL(link))
-
 		}
 	})
 
@@ -93,24 +130,18 @@ func IDS(startURL, goalURL string, currentDepth int, maxDepth int, visited *[]st
 	*visited = append(*visited, startURL)
 
 	for _, element := range tempArrayURL {
+		// fmt.Println(element)
+		// fmt.Println(goalURL)
 
-		if element != "https://en.wikipedia.org/wiki/Main_Page" {
+		if !contains(*visited, element) {
 
-			// fmt.Println(element)
-			// fmt.Println(goalURL)
+			IDS(element, goalURL, currentDepth+1, maxDepth, visited, cek, periksa)
 
-			if !contains(*visited, element) {
-
-				IDS(element, goalURL, currentDepth+1, maxDepth, visited, cek, periksa)
-
-				(*periksa)[element] = true
-
-				if (*visited)[len(*visited)-1] == goalURL {
-					*cek = 1
-					break
-				} else if (*visited)[len(*visited)-1] != goalURL {
-					*visited = (*visited)[:len(*visited)-1]
-				}
+			if (*visited)[len(*visited)-1] == goalURL {
+				*cek = 1
+				break
+			} else if (*visited)[len(*visited)-1] != goalURL {
+				*visited = (*visited)[:len(*visited)-1]
 			}
 		}
 	}

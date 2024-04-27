@@ -3,13 +3,54 @@ package bfs
 import (
 	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 
 	"github.com/dominikbraun/graph"
 	"github.com/gocolly/colly"
 	"github.com/kingledion/go-tools/tree"
 )
+
+func doesNotContainAnyPrefix(s string) bool {
+	prefixes := []string{
+		"https://en.wikipedia.org/wiki/Talk:",
+		"https://en.wikipedia.org/wiki/User:",
+		"https://en.wikipedia.org/wiki/User talk:",
+		"https://en.wikipedia.org/wiki/Wikipedia:",
+		"https://en.wikipedia.org/wiki/WP:",
+		"https://en.wikipedia.org/wiki/WT:",
+		"https://en.wikipedia.org/wiki/Wikipedia talk:",
+		"https://en.wikipedia.org/wiki/File:",
+		"https://en.wikipedia.org/wiki/File talk:",
+		"https://en.wikipedia.org/wiki/MediaWiki:",
+		"https://en.wikipedia.org/wiki/MediaWiki talk:",
+		"https://en.wikipedia.org/wiki/Template:",
+		"https://en.wikipedia.org/wiki/Template talk:",
+		"https://en.wikipedia.org/wiki/Help:",
+		"https://en.wikipedia.org/wiki/Help talk:",
+		"https://en.wikipedia.org/wiki/Category:",
+		"https://en.wikipedia.org/wiki/Category:talk",
+		"https://en.wikipedia.org/wiki/Portal:",
+		"https://en.wikipedia.org/wiki/Portal talk:",
+		"https://en.wikipedia.org/wiki/Draft:",
+		"https://en.wikipedia.org/wiki/Draft talk:",
+		"https://en.wikipedia.org/wiki/TimedText:",
+		"https://en.wikipedia.org/wiki/TimedText talk:",
+		"https://en.wikipedia.org/wiki/Module:",
+		"https://en.wikipedia.org/wiki/Module talk:",
+		"https://en.wikipedia.org/wiki/Image:",
+		"https://en.wikipedia.org/wiki/Image Talk:",
+		"https://en.wikipedia.org/wiki/Topic:",
+		"https://en.wikipedia.org/wiki/Special:",
+		"https://en.wikipedia.org/wiki/Media:",
+	}
+
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(s, prefix) {
+			return false
+		}
+	}
+	return true
+}
 
 func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 	// file, err := os.Create("log.txt")
@@ -27,9 +68,6 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 	list := []string{}
 	var visit_id uint = 0 // tracks id of currently visited link
 
-	// Array to store banned links
-	black_list := []string{"https://en.wikipedia.org/wiki/Main_Page"}
-
 	// Initiate bool to determine if solution is reached
 	found := false
 
@@ -42,20 +80,16 @@ func Main(startURL, goalURL string) (*graph.Graph[string, string], int) {
 	// Counter for visited links
 	num_visited := 0
 
-	c := colly.NewCollector(
-		colly.URLFilters(
-			regexp.MustCompile(`^https://en.wikipedia.org/wiki/([^:]+)[^:]*$`),
-		),
-	)
+	c := colly.NewCollector()
 
-	wikipediaRegex := regexp.MustCompile(`^/wiki/([^:]+)[^:]*$`)
+	wikipediaRegex := regexp.MustCompile(`^https://en.wikipedia.org/wiki/`)
 	// On every a element which has href attribute call callback
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		// link := e.Attr("href")
 		link, _, _ := strings.Cut(e.Attr("href"), "#")
 		absolute_link := e.Request.AbsoluteURL(link)
 
-		if !found && (wikipediaRegex.MatchString(link)) && !(slices.Contains(list, absolute_link)) && !(slices.Contains(black_list, absolute_link)) { // is a wikipedia link && not visited && not in queue
+		if !found && (wikipediaRegex.MatchString(absolute_link)) && (absolute_link != "https://en.wikipedia.org/wiki/Main_Page") && doesNotContainAnyPrefix(absolute_link) { // is a wikipedia link && not visited && not in queue
 
 			// Print link
 			// fmt.Printf("Link found: %q -> %s : %s\n", e.Text, link)
