@@ -7,7 +7,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"regexp"
 	"time"
 
 	"github.com/dominikbraun/graph"
@@ -28,7 +27,7 @@ type TemplateData struct {
 }
 
 func main() {
-	fmt.Println("Apllication is running")
+	fmt.Println("Apllication is running in port 8030")
 
 	home := func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("index.html"))
@@ -113,18 +112,17 @@ func main() {
 			graphResult, numChecked = bfs.Main(start_url, goal_url)
 		}
 		t2 := time.Now()
-		timer := t2.Sub(t1).Seconds()
+		duration := t2.Sub(t1)
+		minutes := int(duration.Minutes())
+		seconds := duration.Seconds() - float64(minutes)*60
 		lenRes, _ := (*graphResult).Order()
+		lenRes -= 1
 
 		// GRAPH RESULT
 		var buf bytes.Buffer
 		draw.DOT(*graphResult, &buf)
 
 		resDOT := buf.String()
-
-		// Remove line breaks and extra spaces
-		re := regexp.MustCompile(`\s+`)
-		resDOT = re.ReplaceAllString(resDOT, " ")
 
 		tmpl := template.Must(template.New("graphItems").Parse(`
 		<script type="text/javascript">
@@ -140,7 +138,7 @@ func main() {
 			var outputElement = document.getElementById('output');
 		
 			var algorithmElement = document.createElement('h5');
-			algorithmElement.textContent = algo + ' Output'; // Use textContent instead of innerHTML
+			algorithmElement.textContent = algo + ' Output';
 		
 			var listElement = document.createElement('ul');
 			listElement.className = "list-group";
@@ -156,7 +154,7 @@ func main() {
 			listItem2.innerHTML = 'Number of article in solution: ' + vertices;
 		
 			var listItem3 = document.createElement('li');
-			listItem3.innerHTML = 'Time: ' + parseFloat({{.Timer}}).toFixed(5) + ' seconds';
+			listItem3.innerHTML = 'Time: {{.Minute}} minutes ' + parseFloat({{.Second}}).toFixed(5) + ' seconds';
 		
 			// Append the list items to the unordered list
 			listItem0.className = "list-group-item justify-content-center d-flex";
@@ -179,13 +177,15 @@ func main() {
 			Algo       string
 			LenChecked int
 			LenRes     int
-			Timer      float64
+			Minute     int
+			Second     float64
 		}{
 			ResDOT:     resDOT,
 			Algo:       algorithm,
 			LenChecked: numChecked,
 			LenRes:     lenRes,
-			Timer:      timer,
+			Minute:     minutes,
+			Second:     seconds,
 		}
 
 		tmpl.Execute(w, tmplData)
